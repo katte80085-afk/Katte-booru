@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Katte Booru!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&family=Work+Sans:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#5f5f5f;--dark:#3a3a3a;--mid:#808080;--gray:#a8a8a8;--white:#ffffff;--pix:'Silkscreen',monospace;--vt:'VT323',monospace;--sans:'Work Sans',system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--white);font-family:var(--vt);font-size:22px;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+a{color:inherit;text-decoration:none;cursor:pointer}
+button,input,textarea,select{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer;padding:0}
+button:disabled{opacity:.4;cursor:default}
+
+.topbar{position:relative;display:flex;justify-content:flex-end;align-items:flex-start;gap:14px;padding:12px 16px;font-family:var(--pix);font-size:26px;color:var(--gray);z-index:20}
+.topbar .link:hover,.burger:hover{color:var(--white)}
+.topbar [hidden]{display:none}
+.burger{width:40px;height:30px;display:flex;flex-direction:column;justify-content:space-between;padding:2px 0}
+.burger i{display:block;height:6px;background:var(--gray)}
+.menu{position:absolute;right:16px;top:58px;width:min(330px,calc(100vw - 32px));background:var(--dark);padding:8px;display:none}
+.menu.open{display:block}
+.menu ul{list-style:none;margin:0;padding:8px 12px;background:var(--bg);font-family:var(--sans);font-weight:700;font-size:20px;line-height:1.5}
+.menu li{padding:2px 0;cursor:pointer}
+.menu li:hover{color:var(--white);text-decoration:underline}
+
+main{max-width:1500px;margin:0 auto;padding:0 20px 60px}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-top:60px}
+.hero h1{margin:0;font-family:var(--pix);font-weight:400;font-size:clamp(34px,7vw,110px);line-height:1;letter-spacing:.02em;white-space:nowrap}
+.hero .sp{flex:1}
+.search{margin:30px auto 0;width:min(760px,100%);display:flex;gap:6px}
+.sel{background:var(--dark);border:0;height:36px;padding:0 8px;font-family:var(--vt);font-size:22px;color:var(--white);max-width:200px}
+.search input{flex:1;min-width:0;height:36px;background:var(--mid);border:0;padding:0 10px;color:var(--white);font-family:var(--vt);font-size:24px;outline:none}
+.search input::placeholder{color:#c8c8c8}
+.search button{padding:0 14px;background:var(--dark);font-family:var(--pix);font-size:16px}
+.count{margin-top:40px;text-align:center;font-family:var(--pix);font-size:clamp(36px,5vw,64px);line-height:1.1}
+.count small{display:block;font-size:.4em;color:var(--gray);margin-top:4px}
+
+.grid{margin-top:30px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.thumb{position:relative;background:var(--dark);aspect-ratio:1/1;overflow:hidden;border:4px solid var(--dark)}
+.thumb:hover{border-color:var(--gray)}
+.thumb img,.thumb video{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .tag{position:absolute;left:0;bottom:0;background:var(--dark);padding:0 6px;font-size:18px;color:var(--gray)}
+.thumb.blur img{filter:blur(16px)}
+.pager{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;align-items:center;margin-top:24px;color:var(--gray)}
+.pager button{color:var(--white);font-family:var(--pix);font-size:14px;padding:6px 10px;background:var(--dark);min-width:34px}
+.pager button:hover:not(:disabled){background:var(--mid)}
+.pager button.on{background:var(--white);color:var(--bg)}
+
+.post{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;margin-top:30px}
+@media (max-width:900px){.post{grid-template-columns:1fr}}
+.frame{background:var(--dark);padding:10px;text-align:center}
+.frame img,.frame video{max-width:100%;max-height:78vh}
+.panel{background:var(--dark);padding:12px}
+.panel h3{font-family:var(--pix);font-weight:400;font-size:20px;margin:0 0 10px;color:var(--gray)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.btn{background:var(--dark);padding:6px 12px;font-family:var(--pix);font-size:14px;color:var(--white)}
+.btn:hover{background:var(--mid)}
+.btn.on{background:var(--white);color:var(--bg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips a,.chips button{background:var(--bg);padding:2px 8px;color:var(--white)}
+.chips a:hover,.chips button:hover{background:var(--mid)}
+.comment{border-top:2px solid var(--bg);padding:8px 0}
+.comment small{color:var(--gray);font-size:18px}
+.field{width:100%;background:var(--mid);border:0;padding:6px 8px;color:var(--white);outline:none}
+.field::placeholder{color:#d0d0d0}
+.empty{text-align:center;color:var(--gray);padding:40px 0}
+
+.modal{position:fixed;inset:0;background:rgba(30,30,30,.7);display:none;align-items:center;justify-content:center;z-index:50;padding:14px}
+.modal.open{display:flex}
+.modal .panel{width:min(480px,100%);display:grid;gap:12px;max-height:90vh;overflow:auto}
+.modal label{display:grid;gap:4px;color:var(--gray);font-size:19px}
+.modal select{background:var(--mid);border:0;padding:6px 8px;color:var(--white)}
+
+.toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:var(--dark);padding:10px 16px;font-family:var(--pix);font-size:14px;display:none;z-index:60}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="link" id="loginBtn">Login</a>
+  <a class="link" id="settingsBtn" hidden>Settings</a>
+  <button class="burger" id="burgerBtn" aria-label="Menu"><i></i><i></i><i></i></button>
+  <div class="menu" id="menu">
+    <ul>
+      <li data-act="upimg">Upload Image</li>
+      <li data-act="upvid">Upload Video</li>
+      <li data-act="forum">Create Forum</li>
+      <li data-act="accounts">Accounts</li>
+      <li data-act="searchacct">Search Accounts</li>
+      <li data-act="chat">Chat</li>
+    </ul>
+  </div>
+</nav>
+
+<main id="app"></main>
+
+<div class="modal" id="loginModal">
+  <div class="panel">
+    <h3>Choose an account</h3>
+    <div class="chips" id="acctList"></div>
+    <label>Username<input class="field" id="loginUser" type="text" autocomplete="username"></label>
+    <label>Password<input class="field" id="loginPass" type="password" autocomplete="current-password"></label>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="loginCancel">Cancel</button>
+      <button class="btn" id="createAcct">Create</button>
+      <button class="btn" id="loginSubmit">Login</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="panel">
+    <h3>Settings</h3>
+    <label>Rating filter
+      <select id="ratingMode">
+        <option value="s">Safe only</option>
+        <option value="sq">Safe + questionable</option>
+        <option value="all">All ratings</option>
+      </select>
+    </label>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="settingsCancel">Cancel</button>
+      <button class="btn" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="uploadModal">
+  <div class="panel">
+    <h3 id="uploadTitle">Upload</h3>
+    <label>File<input type="file" id="fileIn"></label>
+    <label>Tags (space separated)<textarea class="field" id="tagsIn" rows="3" placeholder="cat cute sky"></textarea></label>
+    <label>Rating
+      <select id="ratingIn"><option value="s">Safe</option><option value="q">Questionable</option><option value="e">Explicit</option></select>
+    </label>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="uploadCancel">Cancel</button>
+      <button class="btn" id="uploadSave">Post</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="searchModal">
+  <div class="panel">
+    <h3>Search accounts</h3>
+    <input class="field" id="acctSearch" type="search" placeholder="type a username" autocomplete="off">
+    <div id="acctResults" style="display:grid;gap:6px;max-height:50vh;overflow:auto"></div>
+    <div class="row" style="justify-content:flex-end"><button class="btn" id="searchAcctClose">Close</button></div>
+  </div>
+</div>
+
+<div class="modal" id="createForumModal">
+  <div class="panel">
+    <h3>Create Forum</h3>
+    <label>Name<input class="field" id="forumName" type="text" maxlength="40"></label>
+    <label>Description<textarea class="field" id="forumDesc" rows="3" maxlength="200"></textarea></label>
+    <div>
+      <small style="color:var(--gray)">Existing forums</small>
+      <div id="forumList" style="display:grid;gap:6px;max-height:30vh;overflow:auto;margin-top:6px"></div>
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="createForumCancel">Cancel</button>
+      <button class="btn" id="createForumSave">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const PER_PAGE = 24;
+  const TAG_POOL = ['cat','sky','city','forest','ocean','robot','flower','night','dragon','star','ruins','rain','sunset','window','castle','garden'];
+
+  // Web switcher entries. Katte Booru is the home board; the rest are separate boards.
+  const SITES = [
+    { id: 'katte', name: 'KATTE BOORU!' },
+    { id: 'danbooru', name: 'Danbooru' },
+    { id: 'gelbooru', name: 'Gelbooru' },
+    { id: 'safebooru', name: 'Safebooru' },
+    { id: 'konachan', name: 'Konachan' },
+    { id: 'yandere', name: 'Yande.re' },
+    { id: 'sankaku', name: 'Sankaku Complex' },
+    { id: 'zerochan', name: 'Zerochan' },
+    { id: 'e621', name: 'E621' },
+    { id: 'moebooru', name: 'Moebooru' },
+    { id: 'derpibooru', name: 'Derpibooru' },
+    { id: 'twibooru', name: 'Twibooru' },
+  ];
+  const SITE_BY_ID = Object.fromEntries(SITES.map(s => [s.id, s]));
+
+  // Deterministic PRNG so each board's sample content is the same on every load.
+  function rng(seed) {
+    let s = (seed >>> 0) || 1;
+    return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return (s % 100000) / 100000; };
+  }
+
+  // Each board keeps its own list of posts, newest first.
+  const boards = {};
+  SITES.forEach((site, si) => {
+    const r = rng(si * 7919 + 13);
+    const n = site.id === 'katte' ? 0 : 60 + Math.floor(r() * 240);
+    const list = [];
+    for (let i = 1; i <= n; i++) {
+      const tags = new Set();
+      const k = 2 + Math.floor(r() * 4);
+      for (let j = 0; j < k; j++) tags.add(TAG_POOL[Math.floor(r() * TAG_POOL.length)]);
+      const x = r();
+      list.push({
+        id: i, site: site.id, kind: 'image', src: null, tags: [...tags],
+        rating: x < 0.7 ? 's' : x < 0.9 ? 'q' : 'e',
+        hue: Math.floor(r() * 360), score: Math.floor(r() * 80) - 10,
+        vote: 0, comments: [], created: new Date(Date.now() - i * 3600e3)
+      });
+    }
+    list.reverse(); // newest (highest id) first
+    boards[site.id] = list;
+  });
+
+  const state = { site: 'katte', mode: 's', user: null, favs: new Set() };
+  const accounts = Object.create(null); // username -> password
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  function svgData(hue, label) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+      <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="hsl(${hue},70%,60%)"/><stop offset="1" stop-color="hsl(${(hue + 60) % 360},70%,35%)"/></linearGradient></defs>
+      <rect width="400" height="400" fill="url(#g)"/>
+      <circle cx="${120 + (hue % 150)}" cy="140" r="60" fill="rgba(255,255,255,.35)"/>
+      <rect x="${60 + (hue % 100)}" y="240" width="200" height="90" rx="18" fill="rgba(0,0,0,.25)"/>
+      <text x="200" y="385" text-anchor="middle" font-family="sans-serif" font-size="22" fill="#fff">${label}</text></svg>`;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  function thumb(p) {
+    if (p.src) return p.src;
+    return p.thumb || (p.thumb = svgData(p.hue, SITE_BY_ID[p.site].name + ' #' + p.id));
+  }
+
+  // ---------- toast ----------
+  let toastT;
+  function toast(msg) {
+    const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ---------- top bar ----------
+  const menu = $('#menu');
+  $('#burgerBtn').onclick = e => { e.stopPropagation(); menu.classList.toggle('open'); };
+  document.addEventListener('click', () => menu.classList.remove('open'));
+  menu.onclick = e => {
+    const act = e.target.dataset.act; if (!act) return;
+    menu.classList.remove('open');
+    if (act === 'upimg') openUpload('image');
+    else if (act === 'upvid') openUpload('video');
+    else if (act === 'accounts') openLogin();
+    else if (act === 'chat') location.hash = '#/chat';
+    else if (act === 'searchacct') openSearchAccounts();
+    else if (act === 'forum') openCreateForum();
+  };
+
+  // ---------- accounts ----------
+  const loginModal = $('#loginModal');
+  function renderAccounts() {
+    const names = Object.keys(accounts);
+    $('#acctList').innerHTML = names.length
+      ? names.map(n => `<button class="btn" data-acct="${esc(n)}">${esc(n)}</button>`).join('')
+      : '<span style="color:var(--gray)">No accounts yet. Create one below.</span>';
+    $('#acctList').querySelectorAll('[data-acct]').forEach(b => b.onclick = () => {
+      $('#loginUser').value = b.dataset.acct; $('#loginPass').value = ''; $('#loginPass').focus();
+    });
+  }
+  function openLogin() {
+    renderAccounts();
+    $('#loginUser').value = ''; $('#loginPass').value = '';
+    loginModal.classList.add('open');
+  }
+  function signIn(u) {
+    state.user = u;
+    $('#loginBtn').textContent = 'Logout';
+    $('#settingsBtn').hidden = false;
+    loginModal.classList.remove('open');
+    toast('Logged in as ' + u);
+  }
+  function signOut() {
+    state.user = null;
+    $('#loginBtn').textContent = 'Login';
+    $('#settingsBtn').hidden = true;
+    toast('Logged out');
+  }
+  $('#loginBtn').onclick = () => state.user ? signOut() : openLogin();
+  $('#loginCancel').onclick = () => loginModal.classList.remove('open');
+  $('#loginSubmit').onclick = () => {
+    const u = $('#loginUser').value.trim(), p = $('#loginPass').value;
+    if (!u || !p) return toast('Enter a username and password');
+    if (!(u in accounts)) return toast('No such account. Press Create.');
+    if (accounts[u] !== p) return toast('Wrong password');
+    signIn(u);
+  };
+  $('#createAcct').onclick = () => {
+    const u = $('#loginUser').value.trim(), p = $('#loginPass').value;
+    if (!u || !p) return toast('Enter a username and password');
+    if (u in accounts) return toast('That account exists. Log in instead.');
+    accounts[u] = p;
+    signIn(u);
+  };
+
+  // ---------- settings ----------
+  const settingsModal = $('#settingsModal');
+  $('#settingsBtn').onclick = () => { $('#ratingMode').value = state.mode; settingsModal.classList.add('open'); };
+  $('#settingsCancel').onclick = () => settingsModal.classList.remove('open');
+  $('#settingsSave').onclick = () => {
+    state.mode = $('#ratingMode').value;
+    settingsModal.classList.remove('open');
+    route();
+  };
+
+  // ---------- query ----------
+  function search(list, str) {
+    const q = { inc: [], exc: [], rating: null };
+    str.toLowerCase().split(/\s+/).filter(Boolean).forEach(t => {
+      if (t.startsWith('rating:')) q.rating = t.slice(7)[0];
+      else if (t.startsWith('-') && t.length > 1) q.exc.push(t.slice(1));
+      else q.inc.push(t);
+    });
+    const ratingOK = r => state.mode === 's' ? r === 's' : state.mode === 'sq' ? r !== 'e' : true;
+    return list.filter(p =>
+      ratingOK(p.rating) &&
+      (!q.rating || p.rating === q.rating) &&
+      q.inc.every(t => p.tags.includes(t)) &&
+      !q.exc.some(t => p.tags.includes(t))
+    );
+  }
+
+  // ---------- router ----------
+  const app = $('#app');
+  function route() {
+    const h = location.hash.replace(/^#/, '');
+    if (h === '/chat') return renderChat();
+    if (h.startsWith('/forum/')) return renderForum(+h.split('/')[2]);
+    if (h.startsWith('/post/')) {
+      const parts = h.split('/');
+      return renderPost(parts[2], +parts[3]);
+    }
+    const params = new URLSearchParams(h.split('?')[1] || '');
+    if (SITE_BY_ID[params.get('site')]) state.site = params.get('site');
+    renderHome(params.get('q') || '', +(params.get('page') || 1));
+  }
+  window.addEventListener('hashchange', route);
+  function go(q, page = 1, site = state.site) {
+    const hash = '#/?' + new URLSearchParams({ site, q, page: String(page) }).toString();
+    location.hash === hash ? route() : (location.hash = hash);
+  }
+
+  function pagerHTML(page, pages) {
+    const want = new Set([1, pages, page - 2, page - 1, page, page + 1, page + 2]);
+    const nums = [...want].filter(p => p >= 1 && p <= pages).sort((a, b) => a - b);
+    let out = '', last = 0;
+    nums.forEach(p => {
+      if (p - last > 1) out += '<span>…</span>';
+      out += `<button class="${p === page ? 'on' : ''}" data-p="${p}">${p}</button>`;
+      last = p;
+    });
+    return `<div class="pager">
+      <button ${page <= 1 ? 'disabled' : ''} data-p="${page - 1}">‹</button>
+      ${out}
+      <button ${page >= pages ? 'disabled' : ''} data-p="${page + 1}">›</button>
+    </div>`;
+  }
+
+  // ---------- home ----------
+  function renderHome(query, page) {
+    const site = SITE_BY_ID[state.site];
+    const all = boards[state.site];
+    const results = search(all, query);
+    const pages = Math.max(1, Math.ceil(results.length / PER_PAGE));
+    page = Math.min(Math.max(1, page), pages);
+    const slice = results.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    const blurOn = state.mode !== 'all';
+
+
+    app.innerHTML = `
+      <section class="hero">
+        ${state.site === 'katte'
+          ? '<h1>KATTE</h1><span class="sp"></span><h1>BOORU!</h1>'
+          : `<h1>${esc(site.name.toUpperCase())}</h1>`}
+      </section>
+      <form class="search" id="searchForm">
+        <input id="q" type="search" placeholder="search tags (cat -dog rating:s)" value="${esc(query)}" autocomplete="off">
+        <button type="submit">GO</button>
+      </form>
+      <div class="count">Posts ${results.length}<small>${esc(site.name)}${query ? ' · filtered' : ''}</small></div>
+      ${slice.length ? `
+        <div class="grid">${slice.map(p => `
+          <a class="thumb ${p.rating === 'e' && blurOn ? 'blur' : ''}" href="#/post/${p.site}/${p.id}">
+            ${p.kind === 'video'
+              ? `<video src="${p.src}" muted preload="metadata"></video>`
+              : `<img loading="lazy" decoding="async" src="${thumb(p)}" alt="">`}
+            <span class="tag">#${p.id}</span>
+          </a>`).join('')}
+        </div>
+        ${pages > 1 ? pagerHTML(page, pages) : ''}`
+      : `<div class="empty">${all.length ? 'No posts match this search.' : 'No posts on this board yet. Log in and use the menu to upload.'}</div>`}`;
+
+    $('#searchForm').onsubmit = e => { e.preventDefault(); go($('#q').value.trim()); };
+    app.querySelectorAll('.pager [data-p]').forEach(b => {
+      if (!b.disabled) b.onclick = () => go(query, +b.dataset.p);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- post ----------
+  function renderPost(site, id) {
+    const list = boards[site];
+    const p = list && list.find(x => x.id === id);
+    if (!p) { app.innerHTML = '<div class="empty">Post not found.</div>'; return; }
+    state.site = site;
+    const idx = list.indexOf(p);
+    const key = site + ':' + id;
+    const media = p.kind === 'video'
+      ? `<video src="${p.src}" controls></video>`
+      : `<img src="${p.src || svgData(p.hue, SITE_BY_ID[site].name + ' #' + id)}" alt="">`;
+
+    app.innerHTML = `
+      <div style="margin-top:30px"><a class="btn" href="#/?site=${site}">‹ BACK</a></div>
+      <div class="post">
+        <div>
+          <div class="frame">${media}</div>
+          <div class="row">
+            <button class="btn ${p.vote === 1 ? 'on' : ''}" id="up">▲ ${p.score}</button>
+            <button class="btn ${p.vote === -1 ? 'on' : ''}" id="down">▼</button>
+            <button class="btn ${state.favs.has(key) ? 'on' : ''}" id="fav">${state.favs.has(key) ? '★ FAVED' : '☆ FAV'}</button>
+            <span style="color:var(--gray)">${esc(SITE_BY_ID[site].name)} · #${p.id} · ${p.rating.toUpperCase()}</span>
+          </div>
+          <div class="panel" style="margin-top:10px">
+            <h3>COMMENTS (${p.comments.length})</h3>
+            ${p.comments.map(c => `<div class="comment"><small>${esc(c.who)} · ${c.at.toLocaleString()}</small><div>${esc(c.text)}</div></div>`).join('')}
+            <form class="row" id="cform"><input class="field" id="ctext" placeholder="say something" style="flex:1"><button class="btn">SEND</button></form>
+          </div>
+        </div>
+        <aside class="panel">
+          <h3>TAGS</h3>
+          <div class="chips">${p.tags.map(t => `<a href="#/?site=${site}&q=${encodeURIComponent(t)}">${esc(t)}</a>`).join('') || '<span style="color:var(--gray)">no tags</span>'}</div>
+          <div class="row" style="margin-top:20px">
+            ${idx > 0 ? `<a class="btn" href="#/post/${site}/${list[idx - 1].id}">‹ NEWER</a>` : ''}
+            ${idx < list.length - 1 ? `<a class="btn" href="#/post/${site}/${list[idx + 1].id}">OLDER ›</a>` : ''}
+          </div>
+        </aside>
+      </div>`;
+
+    const castVote = v => {
+      const prev = p.vote;
+      p.score += (prev === v ? -v : v - prev);
+      p.vote = prev === v ? 0 : v;
+      renderPost(site, id);
+    };
+    $('#up').onclick = () => castVote(1);
+    $('#down').onclick = () => castVote(-1);
+    $('#fav').onclick = () => { state.favs.has(key) ? state.favs.delete(key) : state.favs.add(key); renderPost(site, id); };
+    $('#cform').onsubmit = e => {
+      e.preventDefault();
+      const t = $('#ctext').value.trim(); if (!t) return;
+      p.comments.push({ who: state.user || 'anon', text: t, at: new Date() });
+      renderPost(site, id);
+    };
+  }
+
+  // ---------- upload ----------
+  const uploadModal = $('#uploadModal');
+  let upKind = 'image';
+  function openUpload(kind) {
+    if (!state.user) { toast('Log in to upload'); openLogin(); return; }
+    upKind = kind;
+    $('#uploadTitle').textContent = (kind === 'image' ? 'Upload Image' : 'Upload Video') + ' to ' + SITE_BY_ID[state.site].name;
+    $('#fileIn').value = '';
+    $('#fileIn').accept = kind === 'image' ? 'image/*' : 'video/*';
+    $('#tagsIn').value = '';
+    uploadModal.classList.add('open');
+  }
+  $('#uploadCancel').onclick = () => uploadModal.classList.remove('open');
+  $('#uploadSave').onclick = () => {
+    const f = $('#fileIn').files[0];
+    const tags = $('#tagsIn').value.toLowerCase().split(/\s+/).filter(Boolean);
+    if (!f) return toast('Choose a file first');
+    if (!tags.length) return toast('Add at least one tag');
+    const reader = new FileReader();
+    reader.onload = () => {
+      const list = boards[state.site];
+      const p = {
+        id: (list.length ? Math.max(...list.map(x => x.id)) : 0) + 1,
+        site: state.site, kind: upKind, src: reader.result, tags: [...new Set(tags)],
+        rating: $('#ratingIn').value, score: 0, vote: 0, comments: [], created: new Date(), hue: 0
+      };
+      list.unshift(p);
+      uploadModal.classList.remove('open');
+      location.hash = '#/post/' + p.site + '/' + p.id;
+    };
+    reader.readAsDataURL(f);
+  };
+
+  // ---------- search accounts ----------
+  const searchModal = $('#searchModal');
+  function drawAccountResults() {
+    const q = $('#acctSearch').value.trim().toLowerCase();
+    const names = Object.keys(accounts).filter(n => n.toLowerCase().includes(q)).sort();
+    $('#acctResults').innerHTML = names.length
+      ? names.map(n => `<div class="row" style="justify-content:space-between;margin:0"><span>${esc(n)}</span>${n === state.user ? '<small style="color:var(--gray)">you</small>' : ''}</div>`).join('')
+      : '<span style="color:var(--gray)">No accounts match.</span>';
+  }
+  function openSearchAccounts() {
+    $('#acctSearch').value = '';
+    drawAccountResults();
+    searchModal.classList.add('open');
+    $('#acctSearch').focus();
+  }
+  $('#acctSearch').oninput = drawAccountResults;
+  $('#searchAcctClose').onclick = () => searchModal.classList.remove('open');
+
+  // ---------- chat ----------
+  const chatLog = [];
+  function renderChat() {
+    const msgs = chatLog.map(m => `<div class="comment"><small>${esc(m.user)} · ${m.at.toLocaleTimeString()}</small><div>${esc(m.text)}</div></div>`).join('')
+      || '<div class="empty">No messages yet.</div>';
+    app.innerHTML = `
+      <div style="margin-top:30px"><a class="btn" href="#/">‹ BACK</a></div>
+      <section class="hero" style="margin-top:30px"><h1>CHAT</h1></section>
+      <div class="panel" style="margin-top:20px">
+        <div id="chatBox" style="height:60vh;overflow:auto;padding-right:6px">${msgs}</div>
+        ${state.user
+          ? '<form class="row" id="chatForm"><input class="field" id="chatText" placeholder="type a message" autocomplete="off" style="flex:1"><button class="btn">SEND</button></form>'
+          : '<div class="row" style="justify-content:center"><span style="color:var(--gray)">Log in to chat.</span><button class="btn" id="chatLogin">LOGIN</button></div>'}
+      </div>`;
+    const box = $('#chatBox');
+    box.scrollTop = box.scrollHeight;
+    if (state.user) {
+      $('#chatForm').onsubmit = e => {
+        e.preventDefault();
+        const t = $('#chatText').value.trim();
+        if (!t) return;
+        chatLog.push({ user: state.user, text: t, at: new Date() });
+        renderChat();
+        $('#chatText').focus();
+      };
+    } else {
+      $('#chatLogin').onclick = openLogin;
+    }
+  }
+
+  // ---------- forums ----------
+  const forums = [];
+  const createForumModal = $('#createForumModal');
+  function drawForumList() {
+    $('#forumList').innerHTML = forums.length
+      ? forums.map(f => `<a class="row" href="#/forum/${f.id}" style="margin:0;justify-content:space-between"><span>${esc(f.name)}</span><small style="color:var(--gray)">${f.posts.length} msgs</small></a>`).join('')
+      : '<span style="color:var(--gray)">No forums yet.</span>';
+  }
+  function openCreateForum() {
+    $('#forumName').value = '';
+    $('#forumDesc').value = '';
+    drawForumList();
+    createForumModal.classList.add('open');
+  }
+  $('#forumList').onclick = e => { if (e.target.closest('a')) createForumModal.classList.remove('open'); };
+  $('#createForumCancel').onclick = () => createForumModal.classList.remove('open');
+  $('#createForumSave').onclick = () => {
+    if (!state.user) {
+      createForumModal.classList.remove('open');
+      toast('Log in to create a forum');
+      openLogin();
+      return;
+    }
+    const name = $('#forumName').value.trim();
+    if (!name) return toast('Enter a forum name');
+    if (forums.some(f => f.name.toLowerCase() === name.toLowerCase())) return toast('A forum with that name exists');
+    const f = {
+      id: forums.length ? Math.max(...forums.map(x => x.id)) + 1 : 1,
+      name, desc: $('#forumDesc').value.trim(), owner: state.user, posts: [], created: new Date()
+    };
+    forums.unshift(f);
+    createForumModal.classList.remove('open');
+    location.hash = '#/forum/' + f.id;
+  };
+  function renderForum(id) {
+    const f = forums.find(x => x.id === id);
+    if (!f) { app.innerHTML = '<div class="empty">Forum not found.</div>'; return; }
+    const msgs = f.posts.map(m => `<div class="comment"><small>${esc(m.who)} · ${m.at.toLocaleString()}</small><div>${esc(m.text)}</div></div>`).join('')
+      || '<div class="empty">No messages yet.</div>';
+    app.innerHTML = `
+      <div style="margin-top:30px"><a class="btn" href="#/">‹ BACK</a></div>
+      <section class="hero" style="margin-top:30px"><h1>${esc(f.name.toUpperCase())}</h1></section>
+      <p style="text-align:center;color:var(--gray);margin:10px 0 0">${esc(f.desc) || 'no description'} · by ${esc(f.owner)}</p>
+      <div class="panel" style="margin-top:20px">
+        ${msgs}
+        ${state.user
+          ? '<form class="row" id="forumForm"><input class="field" id="forumText" placeholder="write in this forum" autocomplete="off" style="flex:1"><button class="btn">POST</button></form>'
+          : '<div class="row" style="justify-content:center"><span style="color:var(--gray)">Log in to post.</span><button class="btn" id="forumLogin">LOGIN</button></div>'}
+      </div>`;
+    if (state.user) {
+      $('#forumForm').onsubmit = e => {
+        e.preventDefault();
+        const t = $('#forumText').value.trim();
+        if (!t) return;
+        f.posts.push({ who: state.user, text: t, at: new Date() });
+        renderForum(id);
+      };
+    } else {
+      $('#forumLogin').onclick = openLogin;
+    }
+  }
+
+  route();
+})();
+</script>
+</body>
+</html>
